@@ -12,11 +12,13 @@ node('linux-amd64') {
       'GEOIPUPDATE_DB_GETJIO_PROD_DIR=get.jenkins.io/geoipdata', // No slash at the beginning (fileshare signed URL has a trailing slash)
       'GEOIPUPDATE_DB_UPDATESJIO_PROD_DIR=updates.jenkins.io/geoipdata', // No slash at the beginning (fileshare signed URL has a trailing slash)
       "GEOIPUPDATE_DB_DIR=${env.WORKSPACE}/geoipdata",
+      'GEOIPUPDATE_DOCKER_IMAGE=ghcr.io/maxmind/geoipupdate:v8.0.0', // Tracked by updatecli
+      'GEOIPUPDATE_DRYRUN=false', // set to true for production
     ]) {
 
       stage('Check Prerequisites') {
         sh '''
-        docker run --rm --entrypoint=geoipupdate ghcr.io/maxmind/geoipupdate --version
+        docker run --rm --entrypoint=geoipupdate "${GEOIPUPDATE_DOCKER_IMAGE}" --version
         azcopy --version
         rsync --version
         '''
@@ -25,6 +27,12 @@ node('linux-amd64') {
       stage('Retrieve Current Production GeoIP DB') {
         sh '''
         bash ./retrieve-prod-geoip-db.sh
+        '''
+      }
+
+      stage('Get latest Maxmind GeoIP DB') {
+        sh '''
+        bash ./get-maxmind-geoip-db.sh
         '''
       }
     }
