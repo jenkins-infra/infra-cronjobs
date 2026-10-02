@@ -2,10 +2,10 @@
 
 set -eux -o pipefail
 
-geoipupdate_db_dir=${GEOIPUPDATE_DB_DIR?'ERRROR: environment variable GEOIPUPDATE_DB_DIR must be set.'}
-geoipupdate_db_getjio_prod_dir=${GEOIPUPDATE_DB_GETJIO_PROD_DIR:?'ERRROR: environment variable GEOIPUPDATE_DB_GETJIO_PROD_DIR must be set.'}
-STORAGE_NAME=${STORAGE_NAME:?'ERRROR: environment variable STORAGE_NAME must be set.'}
-STORAGE_FILESHARE=${STORAGE_FILESHARE:?'ERRROR: environment variable STORAGE_FILESHARE must be set.'}
+geoipupdate_db_dir=${GEOIPUPDATE_DB_DIR?'ERROR: environment variable GEOIPUPDATE_DB_DIR must be set.'}
+geoipupdate_db_getjio_prod_dir=${GEOIPUPDATE_DB_GETJIO_PROD_DIR:?'ERROR: environment variable GEOIPUPDATE_DB_GETJIO_PROD_DIR must be set.'}
+STORAGE_NAME=${STORAGE_NAME:?'ERROR: environment variable STORAGE_NAME must be set.'}
+STORAGE_FILESHARE=${STORAGE_FILESHARE:?'ERROR: environment variable STORAGE_FILESHARE must be set.'}
 
 mkdir -p "${geoipupdate_db_dir}"
 
