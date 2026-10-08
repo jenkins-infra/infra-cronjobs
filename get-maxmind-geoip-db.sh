@@ -5,13 +5,12 @@ set -eux -o pipefail
 geoipupdate_db_dir="$(cd "${GEOIPUPDATE_DB_DIR?'ERROR: environment variable GEOIPUPDATE_DB_DIR must be set.'}" && pwd -P)" \
   || { echo "ERROR: no directory at the value provided by GEOIPUPDATE_DB_DIR (${GEOIPUPDATE_DB_DIR})"; exit 1; }
 export geoipupdate_db_dir
+geoipupdate_json_report="${GEOIPUPDATE_JSON_REPORT?'ERROR: environment variable GEOIPUPDATE_JSON_REPORT must be set.'}"
 GEOIPUPDATE_DOCKER_IMAGE="${GEOIPUPDATE_DOCKER_IMAGE?'ERROR: environment variable GEOIPUPDATE_DOCKER_IMAGE must be set.'}"
 
 geoipupdate_logs_dir="$(cd "$(dirname "$0")" && pwd -P)/geoipupdate_logs"
 rm -rf "${geoipupdate_logs_dir}"
 mkdir -p "${geoipupdate_logs_dir}"
-
-geoipupdate_json_report="${geoipupdate_logs_dir}/.healthcheck" # ref. $logfile at https://github.com/maxmind/geoipupdate/blob/9da00bfca4633cd388f1393b6919dc51f1bb992b/docker/entry.sh#L19
 
 if [ "${GEOIPUPDATE_DRYRUN:-false}" == "true" ]; then
   GEOIPUPDATE_EDITION_IDS="${GEOIPUPDATE_EDITION_IDS?'ERROR: environment variable GEOIPUPDATE_EDITION_IDS must be set.'}"
@@ -35,6 +34,8 @@ else
     ## Use this version to test, in dry run, the case of "not changed data"
     # echo '[{"edition_id":"GeoLite2-ASN","old_hash":"857a0cf8118b9961cf6789e1842bce2a","new_hash":"857a0cf8118b9961cf6789e1842bce2a","checked_at":1733760216},{"edition_id":"GeoLite2-City","old_hash":"fb3449d8252f74eac39fc55c32c19879","new_hash":"fb3449d8252f74eac39fc55c32c19879","checked_at":1733760216},{"edition_id":"GeoLite2-Country","old_hash":"27b1f57ae9dd56e1923f5d458514794c","new_hash":"27b1f57ae9dd56e1923f5d458514794c","checked_at":1733760216}]' > "${geoipupdate_json_report}"
 fi
-jq -r . "${geoipupdate_json_report}"
+
+# ref. $logfile at https://github.com/maxmind/geoipupdate/blob/9da00bfca4633cd388f1393b6919dc51f1bb992b/docker/entry.sh#L19
+cp "${geoipupdate_logs_dir}/.healthcheck"  "${geoipupdate_json_report}"
 
 exit 0

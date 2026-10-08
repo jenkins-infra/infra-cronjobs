@@ -5,7 +5,9 @@ node('linux-amd64') {
     'STORAGE_NAME=geoipdbjenkinsio', // Storage Account
     'STORAGE_FILESHARE=geoipdb-jenkins-io', // Fileshare
     "GEOIPUPDATE_DB_DIR=${env.WORKSPACE}/geoipdata",
+    "GEOIPUPDATE_JSON_REPORT=${env.WORKSPACE}/geoipdata/.healthcheck.json", // Persist state for conditional update on next run
     'GEOIPUPDATE_DOCKER_IMAGE=ghcr.io/maxmind/geoipupdate:v8.0.0', // Tracked by updatecli
+
   ]) {
 
     stage('Check Prerequisites') {
@@ -28,7 +30,7 @@ node('linux-amd64') {
 
     stage('Get latest Maxmind GeoIP DB') {
       withEnv([
-        'GEOIPUPDATE_DRYRUN=false', // set to true for production
+        'GEOIPUPDATE_DRYRUN=true', // set to true for production
         'GEOIPUPDATE_EDITION_IDS=GeoLite2-ASN GeoLite2-City GeoLite2-Country', // ref. https://github.com/maxmind/geoipupdate/blob/main/doc/docker.md#configuring
       ]) {
         withCredentials([
@@ -44,11 +46,12 @@ node('linux-amd64') {
 
     stage('Update Production GeoIP DB') {
       withCredentials([
+        azureServicePrincipal(clientIdVariable: 'JENKINS_INFRA_FILESHARE_CLIENT_ID', clientSecretVariable: 'JENKINS_INFRA_FILESHARE_CLIENT_SECRET', credentialsId: 'cronjob-geoipdbstorage-fileshare-service-principal-writer', subscriptionIdVariable: 'JENKINS_INFRA_SUBSCRIPTION_ID ', tenantIdVariable: 'JENKINS_INFRA_FILESHARE_TENANT_ID'),
         file(credentialsId: 'kubeconfig-publick8s-getjenkinsio-restarter', variable: 'KUBECONFIG_GETJENKINSIO'),
         file(credentialsId: 'kubeconfig-publick8s-updatesjenkinsio-restarter', variable: 'KUBECONFIG_UPDATESJENKINSIO'),
       ]) {
         sh '''
-        echo DEPLOY
+        bash ./update-prod-geoip-db.sh
         '''
       }
     }
