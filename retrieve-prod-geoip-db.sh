@@ -3,7 +3,6 @@
 set -eux -o pipefail
 
 geoipupdate_db_dir=${GEOIPUPDATE_DB_DIR?'ERROR: environment variable GEOIPUPDATE_DB_DIR must be set.'}
-geoipupdate_db_getjio_prod_dir=${GEOIPUPDATE_DB_GETJIO_PROD_DIR:?'ERROR: environment variable GEOIPUPDATE_DB_GETJIO_PROD_DIR must be set.'}
 STORAGE_NAME=${STORAGE_NAME:?'ERROR: environment variable STORAGE_NAME must be set.'}
 STORAGE_FILESHARE=${STORAGE_FILESHARE:?'ERROR: environment variable STORAGE_FILESHARE must be set.'}
 
@@ -21,9 +20,8 @@ fileShareSignedUrl="$(get-fileshare-signed-url.sh)"
 urlWithoutToken="${fileShareSignedUrl%\?*}"
 token="${fileShareSignedUrl#*\?}"
 
-# Assuming we only have 1 source of truth in production for all services
-# If other services are lacking behind it is an edge case
-sourceUrl="${urlWithoutToken}${geoipupdate_db_getjio_prod_dir}/*"
+# Assuming all data is at the root
+sourceUrl="${urlWithoutToken}*"
 echo "INFO: Copying from: ${sourceUrl}"
 
 # See https://github.com/Azure/azure-storage-azcopy/issues/3024 for the piped prefix workaround
@@ -33,7 +31,7 @@ echo "INFO: Copying from: ${sourceUrl}"
   --log-level=ERROR `# Do not write too much logs (I/O...)` \
   --include-pattern='*.mmdb' `# only the mmdb GeoIP databases files` \
 || \
-  { cat "${AZCOPY_LOG_LOCATION}/.azcopy/*"; exit 1; }   # Dump the azcopy logs in case of error
+  { cat "${HOME}/.azcopy/*"; exit 1; }   # Dump the azcopy logs in case of error
 
 ls -ltra "${geoipupdate_db_dir}"/
 
