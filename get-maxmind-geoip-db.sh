@@ -18,6 +18,7 @@ if [ "${GEOIPUPDATE_DRYRUN:-false}" == "true" ]; then
   GEOIPUPDATE_LICENSE_KEY="${GEOIPUPDATE_LICENSE_KEY?'ERROR: environment variable GEOIPUPDATE_LICENSE_KEY must be set.'}"
 
   touch "${geoipupdate_json_report}" # In case it does not exist
+  cat "${geoipupdate_json_report}"
 
   docker container run --rm \
     --volume "${geoipupdate_db_dir}:${geoipupdate_db_dir}:rw" \
@@ -38,5 +39,6 @@ else
 fi
 
 ls -ltra "${geoipupdate_db_dir}"/
+cat "${geoipupdate_json_report}"
 
 exit 0
