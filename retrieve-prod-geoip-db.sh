@@ -36,6 +36,5 @@ echo "INFO: Copying from: ${sourceUrl}"
   { cat "${HOME}/.azcopy/*"; exit 1; }   # Dump the azcopy logs in case of error
 
 ls -ltra "${geoipupdate_db_dir}"/
-cat "${geoipupdate_json_report}"
 
 exit 0

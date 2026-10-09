@@ -17,9 +17,11 @@ if [ "${GEOIPUPDATE_DRYRUN:-false}" == "true" ]; then
   GEOIPUPDATE_ACCOUNT_ID="${GEOIPUPDATE_ACCOUNT_ID?'ERROR: environment variable GEOIPUPDATE_ACCOUNT_ID must be set.'}"
   GEOIPUPDATE_LICENSE_KEY="${GEOIPUPDATE_LICENSE_KEY?'ERROR: environment variable GEOIPUPDATE_LICENSE_KEY must be set.'}"
 
+  touch "${geoipupdate_json_report}" # In case it does not exist
+
   docker container run --rm \
     --volume "${geoipupdate_db_dir}:${geoipupdate_db_dir}:rw" \
-    --volume "${geoipupdate_logs_dir}:/tmp/geoipupdate:rw" \
+    --volume "${geoipupdate_json_report}:/tmp/geoipupdate/healthcheck:rw" `# ref. $logfile at https://github.com/maxmind/geoipupdate/blob/9da00bfca4633cd388f1393b6919dc51f1bb992b/docker/entry.sh#L19` \
     --env GEOIPUPDATE_EDITION_IDS \
     --env GEOIPUPDATE_ACCOUNT_ID \
     --env GEOIPUPDATE_LICENSE_KEY \
@@ -35,7 +37,6 @@ else
     # echo '[{"edition_id":"GeoLite2-ASN","old_hash":"857a0cf8118b9961cf6789e1842bce2a","new_hash":"857a0cf8118b9961cf6789e1842bce2a","checked_at":1733760216},{"edition_id":"GeoLite2-City","old_hash":"fb3449d8252f74eac39fc55c32c19879","new_hash":"fb3449d8252f74eac39fc55c32c19879","checked_at":1733760216},{"edition_id":"GeoLite2-Country","old_hash":"27b1f57ae9dd56e1923f5d458514794c","new_hash":"27b1f57ae9dd56e1923f5d458514794c","checked_at":1733760216}]' > "${geoipupdate_json_report}"
 fi
 
-# ref. $logfile at https://github.com/maxmind/geoipupdate/blob/9da00bfca4633cd388f1393b6919dc51f1bb992b/docker/entry.sh#L19
-cp "${geoipupdate_logs_dir}/.healthcheck"  "${geoipupdate_json_report}"
+ls -ltra "${geoipupdate_db_dir}"/
 
 exit 0
