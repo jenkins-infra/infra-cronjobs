@@ -17,6 +17,8 @@ export STORAGE_DURATION_IN_MINUTE=2
 # Both read and write are needed
 export STORAGE_PERMISSIONS=dlrw
 
+cat "${geoipupdate_json_report}"
+
 # > /dev/null to avoid multiple true in output but keep errors output
 if jq -e '.[] | select(.old_hash != .new_hash)' "${geoipupdate_json_report}" > /dev/null
 then
