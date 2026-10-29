@@ -60,8 +60,11 @@ for build_line in "${build_lines[@]}"; do
 		"${mvn_buildline_opts[@]}" \
 		"${mvn_dependency_offline_target}"
 done
-popd
 
+# Additional spotless dependencies
+time mvn "${mvn_global_opts[@]}" spotless:check
+
+popd
 
 # Generate a new cache archive from the local Maven repository
 pushd "${mvn_local_repo}"
