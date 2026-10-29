@@ -22,12 +22,12 @@ urlWithoutToken="${fileShareSignedUrl%\?*}"
 token="${fileShareSignedUrl#*\?}"
 
 # Assuming all data is at the root
-sourceUrl="${urlWithoutToken}*"
+sourceUrl="${urlWithoutToken}/${SOURCE_PATH}"
 echo "INFO: Copying from: ${sourceUrl}"
 
 # See https://github.com/Azure/azure-storage-azcopy/issues/3024 for the piped prefix workaround
 : | azcopy copy \
-  "${sourceUrl}/${SOURCE_PATH}?${token}" "${DESTINATION_PATH}"/ \
+  "${sourceUrl}?${token}" "${DESTINATION_PATH}"/ \
   --skip-version-check `# Do not check for new azcopy versions (we have updatecli + puppet for this)` \
   --log-level=ERROR `# Do not write too much logs (I/O...)` \
 || \
