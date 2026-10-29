@@ -72,5 +72,5 @@ du -sh .
 # Remove Maven internal resolutions files
 find . -type f -name '_remote.repositories' -exec rm -f {} \; || true
 du -sh .
-time tar --create --no-xattrs --file="${mvn_cache_archive}" ./
-du -sh "${mvn_cache_dir}"/*.gz
+time tar --create --no-xattrs --gzip --file="${mvn_cache_archive}" ./
+du -sh "${mvn_cache_archive}"
