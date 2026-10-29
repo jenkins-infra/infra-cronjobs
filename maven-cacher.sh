@@ -2,6 +2,7 @@
 set -eux -o pipefail
 
 : "${MVN_ARCHIVE_NAME:?Set MVN_ARCHIVE_NAME}"
+: "${MAVEN_SETTINGS:?Set MAVEN_SETTINGS}"
 : "${RELEASE_LINES:?Set RELEASE_LINES}"
 : "${GITHUB_ORG:?Set GITHUB_ORG}"
 : "${JENKINS_BRANCHES:-master}"
@@ -13,6 +14,7 @@ mvn_cache_dir="${MVN_CACHE_DIR:-"/tmp"}"
 test -d "${mvn_cache_dir}"
 mvn_local_repo="${MVN_LOCAL_REPO:-"${HOME}/.m2/repository"}"
 mvn_cache_archive="${mvn_cache_dir}/${MVN_ARCHIVE_NAME}"
+mvn_global_opts=("-Dmaven.repo.local=${mvn_local_repo}" "-s ${MAVEN_SETTINGS}")
 # As 'dependency:go-offline' always use latest and until https://github.com/jenkins-infra/helpdesk/issues/5198 is fixed let's pin to 3.10.0
 mvn_dependency_offline_target='org.apache.maven.plugins:maven-dependency-plugin:3.10.0:go-offline'
 mvn_global_opts=("-Dmaven.repo.local=${mvn_local_repo}")
