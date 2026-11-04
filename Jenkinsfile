@@ -56,6 +56,7 @@ node('linux-amd64') {
   stage('Prepare archive') {
     withEnv([
       "MVN_ARCHIVE_NAME=${archiveName}",
+      "MVN_CACHE_DIR=${env.WORKSPACE}",
       "RELEASE_LINES=${releaseLines}",
       "JENKINS_BRANCHES=${jenkinsBranches}",
     ]) {
