@@ -37,10 +37,18 @@ node('linux-amd64') {
           tenantIdVariable: 'JENKINS_INFRA_FILESHARE_TENANT_ID',
         ),
       ]) {
-        sh 'bash ./retrieve-from-fileshare.sh'
-        sh '''
-          ls -al "${DESTINATION_PATH}
-        '''
+        try {
+          sh 'bash ./retrieve-from-fileshare.sh'
+          // TODO: extract archive
+          sh '''
+            ls -al "${DESTINATION_PATH}
+          '''
+        } catch (e) {
+          catchError(buildResult: 'SUCCESS', stageResult: 'NOT_BUILT') {
+            error("No existing ${archiveName} found in ${archiveSourceStorage.storageAccount}/${archiveSourceStorage.fileshare}")
+          }
+          return
+        }
       }
     }
   }
@@ -52,9 +60,7 @@ node('linux-amd64') {
       "JENKINS_BRANCHES=${jenkinsBranches}",
     ]) {
       // Fetch the Maven settings with artifact caching proxy in a tmp folder, and set MAVEN_SETTINGS env var to its absolute location.
-      infra.withArtifactCachingProxy {
-        sh 'bash ./maven-cacher.sh'
-      }
+      sh 'bash ./maven-cacher.sh'
     }
   }
 
