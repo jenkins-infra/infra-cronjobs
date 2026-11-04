@@ -2,8 +2,6 @@
 set -eux -o pipefail
 
 : "${MVN_ARCHIVE_NAME:?Set MVN_ARCHIVE_NAME}"
-: "${RELEASE_LINES:?Set RELEASE_LINES}"
-: "${JENKINS_BRANCHES:-master}"
 
 mvn_cache_dir="${MVN_CACHE_DIR:-"/tmp"}"
 test -d "${mvn_cache_dir}"
@@ -14,14 +12,39 @@ mvn_global_opts=("-Dmaven.repo.local=${mvn_local_repo}")
 mvn_dependency_offline_target='org.apache.maven.plugins:maven-dependency-plugin:3.10.0:go-offline'
 script_dir="$(cd "$(dirname "$0")" && pwd -P)"
 
+## BOM and additional spotless dependencies
+test -d ./bom || git clone "https://github.com/jenkinsci/bom"
+pushd ./bom
+
+# Retrieve release lines and Jenkins Core branches to retrieve dependencies from using BOM's sample-plugin POM as source of truth
+RELEASE_LINES="$(echo weekly && grep -F '.x</bom>' sample-plugin/pom.xml | sed -E 's, *<bom>(.+)</bom>,\1,g' | sort -rn)"
+JENKINS_BRANCHES="$(sed -E 's/^weekly$/master/; s/^([0-9]+\.[0-9]+)\.x$/stable-\1/' <<< "${RELEASE_LINES}")"
+
+# Stay in the bom for its sub-project 'sample-plugin'
+while IFS= read -r build_line; do
+	mvn_buildline_opts=("${mvn_global_opts[@]}")
+	if [[ $build_line != "weekly" ]]; then
+		mvn_buildline_opts+=("-P" "${build_line}")
+	fi
+	time mvn -pl sample-plugin \
+		-DincludeScore=runtime,compile,test \
+		"${mvn_buildline_opts[@]}" \
+		"${mvn_dependency_offline_target}"
+done <<< "${RELEASE_LINES}"
+
+# Additional spotless dependencies specific to BOM
+time mvn "${mvn_global_opts[@]}" spotless:check
+
+popd
+
+## Jenkins Core and additional missing dependencies
 test -d ./jenkins || git clone "https://github.com/jenkinsci/jenkins"
 pushd ./jenkins
 
-read -r -a branches <<<"${JENKINS_BRANCHES:-}"
-for branch in "${branches[@]}"; do
+while IFS= read -r branch; do
 	git checkout "${branch}"
 	time mvn "${mvn_global_opts[@]}" "${mvn_dependency_offline_target}"
-done
+done <<< "${JENKINS_BRANCHES}"
 
 # Missing deps
 missing_deps_file="${script_dir}"/missing-deps.txt
@@ -45,27 +68,7 @@ done <"${missing_deps_file}"
 
 popd
 
-test -d ./bom || git clone "https://github.com/jenkinsci/bom"
-pushd ./bom
-# Stay in the bom for its sub-project 'sample-plugin'
-read -r -a build_lines <<<"${RELEASE_LINES:-}"
-for build_line in "${build_lines[@]}"; do
-	mvn_buildline_opts=("${mvn_global_opts[@]}")
-	if [[ $build_line != "weekly" ]]; then
-		mvn_buildline_opts+=("-P" "${build_line}")
-	fi
-	time mvn -pl sample-plugin \
-		-DincludeScore=runtime,compile,test \
-		"${mvn_buildline_opts[@]}" \
-		"${mvn_dependency_offline_target}"
-done
-
-# Additional spotless dependencies
-time mvn "${mvn_global_opts[@]}" spotless:check
-
-popd
-
-# Generate a new cache archive from the local Maven repository
+## Cache archive generation from local Maven repository
 pushd "${mvn_local_repo}"
 
 # Remove Maven internal resolutions files

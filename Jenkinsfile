@@ -1,7 +1,4 @@
 def archiveName = "maven-cache-jenkinsci.tar.gz"
-// TODO: track with updatecli, "weekly " + https://github.com/jenkinsci/bom/blob/6e1147dd51f1625ead5e82671480862252e1a16c/prep.sh#L11
-def releaseLines = 'weekly 2.580.x 2.568.x 2.555.x'
-def jenkinsBranches = 'master stable-2.580 stable-2.568 stable-2.555'
 
 def storages = [
   'sweden-central': [
@@ -57,8 +54,6 @@ node('linux-amd64') {
     withEnv([
       "MVN_ARCHIVE_NAME=${archiveName}",
       "MVN_CACHE_DIR=${env.WORKSPACE}",
-      "RELEASE_LINES=${releaseLines}",
-      "JENKINS_BRANCHES=${jenkinsBranches}",
     ]) {
       // Fetch the Maven settings with artifact caching proxy in a tmp folder, and set MAVEN_SETTINGS env var to its absolute location.
       sh 'bash ./maven-cacher.sh'
