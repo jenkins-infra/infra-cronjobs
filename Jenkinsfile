@@ -10,6 +10,12 @@ def storages = [
 // TODO: replace by storage account in same region as infra.ci.jenkins.io agents when ready
 def archiveSourceStorage = storages['sweden-central']
 
+properties([
+  disableConcurrentBuilds(abortPrevious: true),
+  buildDiscarder(logRotator(numToKeepStr: '5')),
+  pipelineTriggers([cron('0 0 * * 0')])
+])
+
 node('linux-amd64') {
   stage('Checkout and checks') {
     checkout scm
