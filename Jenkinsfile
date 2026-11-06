@@ -1,18 +1,23 @@
 def archiveName = "maven-cache.tar.zst"
 
 def storages = [
-  'fileshare-cert-ci-jenkins-io': [
-    fileshare: 'cache-cert-ci-jenkins-io',
-    storageAccount: 'certcijenkinsiosponsored',
-    credentialsId: 'infraci-certcijenkinsio-fileshare-serviceprincipal-writer',
-  ],
   's3-ci-jenkins-io': [
     bucketName: 'ci-jenkins-io-maven-cache',
     credentialsId: 'infra-ci-maven-cacher',
   ],
+  'fs-cache-east-us-2': [
+    fileshare: 'cache-east-us-2',
+    storageAccount: 'cacheeastus2',
+    credentialsId: 'cache-east-us-2-fileshare-serviceprincipal-writer',
+  ],
+  'fs-cache-sweden-central': [
+    fileshare: 'cache-sweden-central',
+    storageAccount: 'cacheswedencentral',
+    credentialsId: 'cache-sweden-central-fileshare-serviceprincipal-writer',
+  ],
 ]
-// TODO: replace by storage account in same region as infra.ci.jenkins.io agents when ready
-def archiveSourceStorage = storages['fileshare-cert-ci-jenkins-io']
+// Region of infra.ci.jenkins.io agents
+def archiveSourceStorage = storages['fs-cache-east-us-2']
 
 properties([
   buildDiscarder(logRotator(numToKeepStr: '5')),
@@ -40,7 +45,7 @@ node('linux') {
             credentialsId: archiveSourceStorage.credentialsId,
             clientIdVariable: 'JENKINS_INFRA_FILESHARE_CLIENT_ID',
             clientSecretVariable: 'JENKINS_INFRA_FILESHARE_CLIENT_SECRET',
-            subscriptionIdVariable: 'JENKINS_INFRA_SUBSCRIPTION_ID ',
+            subscriptionIdVariable: 'JENKINS_INFRA_SUBSCRIPTION_ID',
             tenantIdVariable: 'JENKINS_INFRA_FILESHARE_TENANT_ID',
           ),
         ]) {
