@@ -33,7 +33,7 @@ while IFS= read -r build_line; do
 done <<< "${RELEASE_LINES}"
 
 # Additional spotless dependencies specific to BOM
-time mvn "${mvn_global_opts[@]}" spotless:check
+time mvn "${mvn_global_opts[@]}" spotless:apply
 
 popd
 
