@@ -59,7 +59,7 @@ node('linux') {
             '''
           } catch (e) {
             catchError(buildResult: 'SUCCESS', stageResult: 'NOT_BUILT') {
-              error("No existing ${archiveName} found in ${archiveSourceStorage.storageAccount}/${archiveSourceStorage.fileshare}")
+              error("No existing ${archiveName} found in ${archiveSourceStorage.storageAccount}/${archiveSourceStorage.fileshare}" + "\n" + e)
             }
             return
           }

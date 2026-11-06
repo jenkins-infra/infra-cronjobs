@@ -22,9 +22,7 @@ token="${fileshare_signed_url#*\?}"
 source_url="${url_without_token%/}/${ARCHIVE_NAME}"
 echo "INFO: Downloading ${ARCHIVE_NAME} from ${source_url}"
 
-azcopy copy "${source_url}?${token}" . \
-  --skip-version-check `# Do not check for new azcopy versions` \
-  --log-level=ERROR `# Do not write too much logs (I/O...)` \
-|| { cat "${HOME}/.azcopy/*"; exit 1; }   # Dump azcopy logs in case of error
+# Do not check for new azcopy versions and do not write too much logs (I/O...)
+azcopy copy "${source_url}?${token}" . --skip-version-check --log-level=ERROR
 
 ls -ltra .
