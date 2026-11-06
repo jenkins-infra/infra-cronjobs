@@ -1,9 +1,17 @@
 #!/bin/bash
+################################################################################################################
+# This script deploys the GeoIP database in $GEOIP_DB_DIR to production (Azure Storage).
+# It fails if there is a missing requirement or hard error (network, etc.).
+# It only deploys if the $GEOIP_DB_UPDATED_REPORT file exists and then removes it.
+# Note: it does NOT fail if there are no deployment.
+################################################################################################################
 
 set -eu -o pipefail
 
 geoip_db_dir="$(cd "${GEOIP_DB_DIR?'ERROR: environment variable GEOIP_DB_DIR must be set.'}" && pwd -P)" \
   || { echo "ERROR: no directory at the value provided by GEOIP_DB_DIR (${GEOIP_DB_DIR})"; exit 1; }
+geoip_db_updated_report="${GEOIP_DB_UPDATED_REPORT?'ERROR: environment variable GEOIP_DB_UPDATED_REPORT must be set.'}"
+
 # All the following STORAGE_* (upper case) variables are needed by get-fileshare-signed-url.sh
 STORAGE_NAME=${STORAGE_NAME:?'ERROR: environment variable STORAGE_NAME must be set.'}
 STORAGE_FILESHARE=${STORAGE_FILESHARE:?'ERROR: environment variable STORAGE_FILESHARE must be set.'}
@@ -13,21 +21,9 @@ export STORAGE_DURATION_IN_MINUTE=2
 # Both read and write are needed
 export STORAGE_PERMISSIONS=dlrw
 
-# date(1) isn't GNU compliant on MacOS, using gdate(1) in that case
-[[ "$(uname  || true)" == "Darwin" ]] && dateCmd="gdate" || dateCmd="date"
-
-age_file="${geoip_db_dir}"/.age
-geoipdb_age_unix="$(cat "${age_file}")"
-now_unix="$(${dateCmd} --date 'now' +%s)"
-age_diff_in_days=$(( (geoipdb_age_unix - now_unix) / 86400 ))
-
-if [ "${age_diff_in_days}" -gt 7 ]
+if test -f "${geoip_db_updated_report}"
 then
-  echo "[INFO] GeoIP DB age is more than 7 days aged: deploying to production and restarting services"
-
-  ####
-  # Deploy DB files
-  ####
+  echo "[INFO] GeoIP DB has been updated: deploying to production and restarting services"
 
   # Disable debug to ensure token isn't printed in the output
   set +x
@@ -47,9 +43,6 @@ then
     { cat "${HOME}/.azcopy/*"; exit 1; }   # Dump the logs in case of error during azcopy copy
   unset fileShareSignedUrl
 
-  ####
-  # Then restart services to ensure they load the new DB
-  ####
   echo '[INFO]: restarting service "updates.jenkins.io"...'
   # TODO: track namespace and deployment name with updatecli from https://github.com/jenkins-infra/kubernetes-management/
   kubectl --kubeconfig="${KUBECONFIG_UPDATESJENKINSIO}" --namespace=updates-jenkins-io rollout status --watch deployment updates-jenkins-io-content-mirrorbits
@@ -57,6 +50,11 @@ then
   # TODO: track namespace and deployment name with updatecli from https://github.com/jenkins-infra/kubernetes-management/
   echo '[INFO]: restarting service "get.jenkins.io"...'
   kubectl --kubeconfig="${KUBECONFIG_GETJENKINSIO}" --namespace=get-jenkins-io rollout status --watch deployment get-jenkins-io-content-mirrorbits
+
+  echo '[INFO]: all good. Cleaning up leftovers...'
+  rm -f "${geoip_db_updated_report}"
 else
-  echo '[INFO] GeoIP DB age is less than 7 days aged: no action to perform'
+  echo '[INFO] GeoIP DB has not been updated: no action to perform'
 fi
+
+exit 0

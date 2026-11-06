@@ -10,6 +10,7 @@ node('jnlp-linux-arm64') {
     'STORAGE_NAME=geoipdbjenkinsio', // Storage Account
     'STORAGE_FILESHARE=geoipdb-jenkins-io', // Fileshare
     "GEOIP_DB_DIR=${env.WORKSPACE}/geoipdata",
+    "GEOIP_DB_UPDATED_REPORT=${env.WORKSPACE}/geoipdb.report",
   ]) {
 
     stage('Check Prerequisites') {

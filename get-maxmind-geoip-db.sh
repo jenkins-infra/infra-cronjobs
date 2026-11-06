@@ -1,9 +1,15 @@
 #!/bin/bash
+################################################################################################################
+# This script retrieves the GeoIP latest DB from Maxmind only if the DB in $GEOIP_DB_DIR is older than 7 days.
+# It fails if there is a missing requirement or hard error (network, etc.).
+# It creates the file $GEOIP_DB_UPDATED_REPORT (empty content) if the DB was updated otherwise it removes it.
+################################################################################################################
 
 set -eu -o pipefail
 
 geoip_db_dir="$(cd "${GEOIP_DB_DIR?'ERROR: environment variable GEOIP_DB_DIR must be set.'}" && pwd -P)" \
   || { echo "ERROR: no directory at the value provided by GEOIP_DB_DIR (${GEOIP_DB_DIR})"; exit 1; }
+geoip_db_updated_report="${GEOIP_DB_UPDATED_REPORT?'ERROR: environment variable GEOIP_DB_UPDATED_REPORT must be set.'}"
 geoip_account_id="${GEOIP_ACCOUNT_ID?'ERROR: environment variable GEOIP_ACCOUNT_ID must be set.'}"
 geoip_license_key="${GEOIP_LICENSE_KEY?'ERROR: environment variable GEOIP_LICENSE_KEY must be set.'}"
 
@@ -40,7 +46,7 @@ geoipdb_last_modified_unix="$("${dateCmd}" --date "${geoipdb_last_modified}" +%s
 echo "[INFO] the latest GeoIP DB from MaxMind was released on ${geoipdb_last_modified} (Unix: ${geoipdb_last_modified_unix})"
 
 # Simulate a 1 month old production GeoIP DB if no '.age' found
-production_geoipdb_age_unix="$(cat "${age_file}" || "${dateCmd}" --date '1 month ago' +%s)"
+production_geoipdb_age_unix="$(cat "${age_file}" 2>/dev/null || "${dateCmd}" --date '1 month ago' +%s)"
 # Note: (GNU)date expect a '@' prefix when `--date` is passed a Unix timestamp
 production_geoipdb_age="$("${dateCmd}" --date "@${production_geoipdb_age_unix}")"
 echo "[INFO] Current GeoIP Production DB was deployed on ${production_geoipdb_age} (Unix: ${production_geoipdb_age_unix})"
@@ -48,11 +54,14 @@ echo "[INFO] Current GeoIP Production DB was deployed on ${production_geoipdb_ag
 age_diff_in_days=$(( (geoipdb_last_modified_unix - production_geoipdb_age_unix) / 86400 ))
 echo "[INFO] GeoIP Production DB and latest MaxMind DB have a difference of ${age_diff_in_days} days"
 
+# Cleanup previous report (in case there is a leftover)
+rm -f "${geoip_db_updated_report}"
+
 if [ "${age_diff_in_days}" -gt 7 ]
 then
   echo "[INFO] More than 7 days age difference: we need to upgrade the Production DB"
 
-  pushd "${geoip_db_dir}"
+  pushd "${geoip_db_dir}" >/dev/null
   for geoip_edition in $geoip_edition_ids
   do
     binary_permalink="https://download.maxmind.com/geoip/databases/${geoip_edition}/download?suffix=tar.gz"
@@ -71,21 +80,26 @@ then
         "${url}"
     done
 
-    # Verify checksum and remove them if not needed anymore
+    echo "[INFO] Verifying download checksum..."
     sha256sum --check ./"${geoip_edition}"_*.sha256
     rm -f ./"${geoip_edition}"_*.sha256
 
     # Extract the mmdb (binary) DB and remove archive
     # Note: using the short form of `-f` is mandatory (--file won't use wildcard from shell globs)
     # Not: we expect GNU tar 1.x. BSDtar works differently.
+    echo "[INFO] Extracting mmdb file from the archive..."
     tar --extract --strip-components=1 --directory="${geoip_db_dir}" --wildcards -f "${geoip_edition}"_*.tar.gz '*.mmdb'
     rm -f ./"${geoip_edition}"_*.tar.gz
   done
 
-  # Generate the age file
+  echo "[INFO] Generating the new age marker file..."
   echo "${geoipdb_last_modified_unix}" > "${age_file}"
 
-  popd
+  echo "[INFO] Reporting the updated DB..."
+  mkdir -p "$(dirname "${geoip_db_updated_report}")"
+  touch "${geoip_db_updated_report}"
+
+  popd >/dev/null
 else
   echo "[INFO] Less than 7 days age difference: no upgrade to perform."
 fi
