@@ -26,6 +26,9 @@ properties([
 
 node('linux') {
   withEnv(["ARCHIVE_NAME=${archiveName}"]) {
+    def description = (currentBuild.description ? currentBuild.description + ' - ' : '') + "${archiveName}"
+    currentBuild.description = description
+
     stage('Checkout and checks') {
       checkout scm
       sh 'tar --version'
@@ -121,7 +124,6 @@ node('linux') {
     def archiveSize = readFile("${archiveName}.size").trim()
     def archiveFileCount = readFile("${archiveName}.files").trim()
     def archiveFolderCount = readFile("${archiveName}.folders").trim()
-    def description = (currentBuild.description ? currentBuild.description + ' - ' : '') + "${archiveName}: ${archiveSize}, ${archiveFileCount} files in ${archiveFolderCount} folders"
-    currentBuild.description = description
+    currentBuild.description += ": ${archiveSize}, ${archiveFileCount} files in ${archiveFolderCount} folders"
   }
 }
