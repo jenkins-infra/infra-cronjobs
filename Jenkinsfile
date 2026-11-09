@@ -109,13 +109,13 @@ node('linux') {
                     tenantIdVariable: 'JENKINS_INFRA_FILESHARE_TENANT_ID',
                   ),
                 ]) {
-                  sh 'bash ./upload-to-fileshare.sh'
+                  sh 'bash ./upload-to-fileshare-with-backup.sh'
                 }
               }
             } else {
               withEnv(["BUCKET_NAME=${storage.bucketName}"]) {
                 withCredentials([aws(credentialsId: storage.credentialsId)]) {
-                  sh 'bash ./upload-to-s3.sh'
+                  sh 'bash ./upload-to-s3-with-backup.sh'
                 }
               }
             }
