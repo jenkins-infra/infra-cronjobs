@@ -75,6 +75,8 @@ pushd "${mvn_local_repo}"
 find . -type f -name '_remote.repositories' -exec rm -f {} \; || true
 # Remove cached resolution failures
 find . -type f -name '*.lastUpdated' -exec rm -f {} \;
+# Remove P2 query cache
+rm -rfv ./dev/equo/p2-data/queries
 
 compression_opts=()
 if [[ "${ARCHIVE_NAME}" == *.tar.gz ]]; then
