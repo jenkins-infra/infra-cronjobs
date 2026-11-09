@@ -75,12 +75,18 @@ node('linux') {
     }
 
     stage('Check archive') {
-      sh '''
-      if ! tar --list --file "${ARCHIVE_NAME}"; then
+      archiveDescription = sh(script: '''
+      archiveList="$(tar --list --file "${ARCHIVE_NAME}")"
+      if [[ -z "${archiveList}" ]]; then
         echo 'ERROR: invalid archive'
         exit 1
       fi
-      '''
+      archiveSize="$(du -sh "${ARCHIVE_NAME}" | cut -f1)"
+      archiveFolderCount="$(grep --count '/$' <<< "$archiveList")"
+      archiveFileCount="$(grep --count --invert-match '/$' <<< "$archiveList")"
+      echo ": ${archiveSize}, ${archiveFileCount} files in ${archiveFolderCount} folders"
+      ''', returnStdout: true).trim()
+      currentBuild.description += archiveDescription
     }
 
     stage('Upload archive') {
@@ -119,11 +125,5 @@ node('linux') {
 
       parallel branches
     }
-
-    // Set build description
-    def archiveSize = readFile("${archiveName}.size").trim()
-    def archiveFileCount = readFile("${archiveName}.files").trim()
-    def archiveFolderCount = readFile("${archiveName}.folders").trim()
-    currentBuild.description += ": ${archiveSize}, ${archiveFileCount} files in ${archiveFolderCount} folders"
   }
 }

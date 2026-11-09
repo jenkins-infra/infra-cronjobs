@@ -86,6 +86,6 @@ fi
 du -sh .
 time tar --create --no-xattrs "${compression_opts[@]}" --file="${mvn_archive_path}" ./
 
-du -sh "${mvn_archive_path}" | cut -f1 | tee -a "${mvn_archive_path}.size"
-find . -mindepth 1 -type f | wc -l | tee -a "${mvn_archive_path}.files"
-find . -mindepth 1 -type d | wc -l | tee -a "${mvn_archive_path}.folders"
+du -sh "${mvn_archive_path}"
+find . -mindepth 1 -type f | wc -l
+find . -mindepth 1 -type d | wc -l
