@@ -125,5 +125,9 @@ node('linux') {
 
       parallel branches
     }
+
+    stage('Publish build status report') {
+      publishBuildStatusReport()
+    }
   }
 }
