@@ -23,11 +23,35 @@ fileshare_signed_url="$(get-fileshare-signed-url.sh)"
 url_without_token="${fileshare_signed_url%\?*}"
 token="${fileshare_signed_url#*\?}"
 
+azcopy_options=(
+  --skip-version-check        # Do not check for new azcopy versions
+  --log-level=ERROR           # Do not write too much logs (I/O...)
+  --overwrite="ifSourceNewer" # Upload if and only if the archive is newer
+)
+
+# Backup existing remote archive before uploading the new one
+backup_source="${url_without_token}${ARCHIVE_NAME}?${token}"
+backup_destination="${url_without_token}${ARCHIVE_NAME}.backup-$(date -u +%Y%m%d)?${token}"
+# Don't fail if there is no existing archive to backup
+azcopy copy "${backup_source}" "${backup_destination}" "${azcopy_options[@]}" || true
+
 # Upload new archive
 echo "INFO: Uploading ${ARCHIVE_NAME} to ${url_without_token}"
-azcopy copy "${ARCHIVE_NAME}" "${fileshare_signed_url}" \
-  --skip-version-check `# Do not check for new azcopy versions` \
-  --log-level=ERROR `# Do not write too much logs (I/O...)`
+azcopy copy "${ARCHIVE_NAME}" "${fileshare_signed_url}" "${azcopy_options[@]}"
+
+# Cleanup old backups
+cutoff_date="$(date -u -d '15 days ago' +%Y%m%d || date -v-15d +%Y%m%d)"
+old_backups="$(azcopy list "${fileshare_signed_url}" --output-type=json \
+  | jq -r --arg cutoff "${cutoff_date}" '
+    select(.MessageType == "ListObject") | .MessageContent | fromjson | .Path
+	| select(contains(".backup-"))
+    | select(split(".backup-")[-1] < $cutoff)
+  ')"
+while IFS= read -r backup; do
+  [[ -z "${backup}" ]] && continue
+  echo "Deleting older backup ${backup}"
+  azcopy rm "${url_without_token%/}/${backup}?${token}"
+done <<< "${old_backups}"
 
 # List remote files
 azcopy list "${fileshare_signed_url}" --running-tally
