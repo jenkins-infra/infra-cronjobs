@@ -83,8 +83,9 @@ node('linux') {
     }
 
     stage('Check archive') {
-      archiveDescription = sh(script: 'bash ./check-archive.sh', returnStdout: true).trim()
-      currentBuild.description += archiveDescription
+      sh 'bash ./check-archive.sh'
+      currentBuild.description += ': ' + readFile("${archiveName}.description").trim()
+      archiveArtifacts "${archiveName}.list"
     }
 
     stage('Upload archive') {
