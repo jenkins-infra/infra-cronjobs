@@ -60,8 +60,8 @@ Azure Files access is performed using short-lived, read/write SAS URLs generated
 
 - maven-cacher.sh: resolves the required Maven dependencies and generates the compressed archive.
 - download-from-fileshare.sh: downloads the existing archive from an Azure Files share.
-- upload-to-fileshare-with-backup.sh: backs up and uploads the archive to an Azure Files share, cleaning up old backups.
-- upload-to-s3-with-backup.sh: backs up and uploads the archive to an AWS S3 bucket, cleaning up old backups.
+- upload-to-fileshare-with-backup.sh: backs up and uploads the archive to an Azure Files share.
+- upload-to-s3-with-backup.sh: backs up and uploads the archive to an AWS S3 bucket.
 
 ### Requirements
 
