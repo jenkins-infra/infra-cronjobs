@@ -7,5 +7,5 @@ Each branch hosts an infra.ci.jenkins.io (private controller) pipeline job imple
 Details in https://github.com/jenkins-infra/helpdesk/issues/4876 for the initialization.
 
 Cron jobs:
-- https://github.com/jenkins-infra/infra-cronjobs/tree/geoipupdates: update GeoIP database used by get.jenkins.io and mirrors.updates.jenkins.io webservices
-- https://github.com/jenkins-infra/infra-cronjobs/tree/maven-cacher: update Maven cache archive used by *.ci.jenkins.io agents
+- [geoipupdates](https://github.com/jenkins-infra/infra-cronjobs/tree/geoipupdates): update GeoIP database used by get.jenkins.io and mirrors.updates.jenkins.io webservices
+- [maven-cacher](https://github.com/jenkins-infra/infra-cronjobs/tree/maven-cacher): update Maven cache archive used by *.ci.jenkins.io agents
