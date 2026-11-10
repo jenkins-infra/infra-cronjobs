@@ -74,22 +74,16 @@ node('linux') {
       }
     }
 
-    stage('Prepare archive') {
-      sh 'bash ./maven-cacher.sh'
+    stage('Populate cache') {
+      sh 'bash ./populate-cache.sh'
+    }
+
+    stage('Create archive') {
+      sh 'bash ./create-archive.sh'
     }
 
     stage('Check archive') {
-      archiveDescription = sh(script: '''
-      archiveList="$(tar --list --file "${ARCHIVE_NAME}")"
-      if [[ -z "${archiveList}" ]]; then
-        echo 'ERROR: invalid archive'
-        exit 1
-      fi
-      archiveSize="$(du -sh "${ARCHIVE_NAME}" | cut -f1)"
-      archiveFolderCount="$(grep --count '/$' <<< "$archiveList")"
-      archiveFileCount="$(grep --count --invert-match '/$' <<< "$archiveList")"
-      echo ": ${archiveSize}, ${archiveFileCount} files in ${archiveFolderCount} folders"
-      ''', returnStdout: true).trim()
+      archiveDescription = sh(script: 'bash ./check-archive.sh', returnStdout: true).trim()
       currentBuild.description += archiveDescription
     }
 
