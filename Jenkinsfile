@@ -1,4 +1,8 @@
-def archiveName = "maven-cache.tar.zst"
+// Compression format of the archive determined from its extension. Supported:
+// .tar: no compression
+// .tar.gz: GZIP (medium compression)
+// .tar.zst: Zstandard (best compression)
+def archiveName = 'maven-cache.tar.zst'
 
 def storages = [
   's3-ci-jenkins-io': [
