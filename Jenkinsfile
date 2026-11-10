@@ -35,10 +35,7 @@ node('linux') {
 
     stage('Checkout and checks') {
       checkout scm
-      sh 'tar --version'
-      sh 'zstd --version'
-      sh 'azcopy --version'
-      sh 'aws --version'
+      sh 'bash ./check-requirements.sh'
     }
 
     // TODO: remove when all our agents will have this archive content copied over in their setup (cloud-init/pod template)
