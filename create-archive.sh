@@ -27,7 +27,3 @@ if [[ "${ARCHIVE_NAME}" == *.tar.zst ]]; then
 fi
 du -sh .
 time tar --create --no-xattrs "${compression_opts[@]}" --file="${mvn_archive_path}" ./
-
-du -sh "${mvn_archive_path}"
-find . -mindepth 1 -type f | wc -l
-find . -mindepth 1 -type d | wc -l
