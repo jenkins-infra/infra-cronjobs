@@ -27,3 +27,5 @@ if [[ "${ARCHIVE_NAME}" == *.tar.zst ]]; then
 fi
 du -sh .
 time tar --create --no-xattrs "${compression_opts[@]}" --file="${mvn_archive_path}" ./
+
+echo "${ARCHIVE_NAME}" > "${ARCHIVE_FOLDER}/maven_cache_archive_name"

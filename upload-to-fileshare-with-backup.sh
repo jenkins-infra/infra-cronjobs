@@ -43,5 +43,8 @@ time azcopy copy "${backup_source}" "${backup_destination}" "${azcopy_options[@]
 echo "INFO: Uploading ${ARCHIVE_NAME} to ${url_without_token}"
 azcopy copy "${ARCHIVE_NAME}" "${fileshare_signed_url}" "${azcopy_options[@]}"
 
+echo "INFO: Uploading marker file containing the arcive name to ${url_without_token}"
+azcopy copy maven_cache_archive_name "${fileshare_signed_url}" "${azcopy_options[@]}"
+
 # List remote files
 azcopy list "${fileshare_signed_url}" --running-tally

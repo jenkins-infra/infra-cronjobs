@@ -21,5 +21,8 @@ time aws s3 cp "${backup_source}" "${backup_destination}" --no-progress --copy-p
 # Upload new archive
 time aws s3 cp "${ARCHIVE_NAME}" "s3://${BUCKET_NAME}" --no-progress
 
+# Upload marker file containing the arcive name
+aws s3 cp maven_cache_archive_name "s3://${BUCKET_NAME}" --no-progress
+
 # List remote files
 aws s3 ls "${BUCKET_NAME}" --human-readable --summarize
